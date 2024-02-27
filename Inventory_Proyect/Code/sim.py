@@ -57,7 +57,6 @@ def hay_que_comprar() -> bool:
 
 
 def comprar(env, cantidad):
-    
     global stock
     global balance
     global comprados
@@ -93,18 +92,22 @@ def vender(name, env, last_sale_ok=[False]):
     global dt
 
     cantidad = random.randint(1, 10)
-    if cantidad < 1 or cantidad > stock:
-        # No se puede vender
-        # llamar al evento mandar a pedir
+    if cantidad < 1:
+
         time = tiempo_atención(negar=True)
         dt = dt + time
-        
+
         last_sale_ok[0] = False
         yield env.timeout(time)  # Deja correr el tiempo n minutos
     else:
-        stock -= cantidad
-        balance += cantidad * PRECIO_VENTA
-        vendidos += cantidad
+        stock -= min(cantidad, stock)
+        if cantidad < stock:
+            balance += cantidad * PRECIO_VENTA
+            vendidos += cantidad
+        else:
+            balance += stock * PRECIO_VENTA
+            vendidos += stock
+            stock = 0
         print("Venta %.2f unidades en minuto %.2f al cliente %s " % (cantidad, env.now, name))
         time = tiempo_atención(negar=True)
 
@@ -131,7 +134,7 @@ def cliente(env, name, personal):
         sale_bool = [False]
         yield env.process(vender(name, env, sale_bool))  # Invoca al proceso vender
         ok_sale = sale_bool[0]
-        #assert ok_sale, f"El cliente {name} no pudo comprar el producto "
+        # assert ok_sale, f"El cliente {name} no pudo comprar el producto "
         print(f"LA venta al cliente {name} fue exitosa {ok_sale}    ")
         # El cliente termina la compra
         deja = env.now
