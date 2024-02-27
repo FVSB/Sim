@@ -23,7 +23,7 @@ PRECIO_VENTA = 3
 #precio mantener una unidad de producto en stock en una unidad de tiempo
 PRECIO_MANTENIMIENTO = 0.5
 #Cant maxima de clientes a ver en la simulacion
-TOT_CLIENTES = 25
+TOT_CLIENTES = 3
 #Tiempo Máximo en reponer
 Repo_Max_T=180
 #Tiempo Minimo en reponer
@@ -38,7 +38,8 @@ vendidos = 0
 comprados = 0
 #balance dinero en caja
 balance = 0
-# variable bool para saber si esta en compra o no
+# ultimo tiempo de compra
+last_time_compra = 0
 
 te = 0.0  # tiempo de espera total
 dt = 0.0  # duracion de servicio total
@@ -55,16 +56,18 @@ def comprar(env, cantidad):
     global stock
     global balance
     global comprados
-    stock += cantidad
+    global last_time_compra
+    #stock += cantidad
     balance -= cantidad * PRECIO_COMPRA
-    comprados += cantidad
+    #comprados += cantidad
     print("Compra %.2f unidades en minuto %.2f" % (cantidad, env.now))
 
     R = random.random()  # Obtiene un numero aleatorio y lo guarda en R
     tiempo = Repo_Max_T - Repo_Min_T
     tiempo_compra = Repo_Min_T + (tiempo * R)  # Distribucion uniforme
     yield env.timeout(tiempo_compra)  # deja correr el tiempo n minutos
-    print("  Compra listo en %.2f minutos" % (tiempo_compra))
+    last_time_compra = env.now
+    print("  Compra listo en %.2f minutos tiempo actual %.2f" % (tiempo_compra,env.now))
 
 def vender(name,env):
     global stock
@@ -89,6 +92,8 @@ def cliente(env, name, personal):
     global fin
     llega = env.now  # Guarda el minuto de llegada del cliente
     print("---> %s llego a la tienda en minuto %.2f" % (name, llega))
+
+
     with personal.request() as request:  # Espera su turno
         yield request  # Obtiene turno
         pasa = env.now  # Guarda el minuto cuado comienza a ser atendido
@@ -103,14 +108,13 @@ def cliente(env, name, personal):
         print("<--- %s deja la tienda en minuto %.2f" % (name, deja))
 
         yield env.timeout(sale_time)
-        if sale_time == 0:
-            # No se pudo vender
-            print("**** %s no se pudo vender" % (name))
-            yield env.process(comprar(env, STOCK_MAX - stock))  # Invoca al proceso comprar al distribuidor
-
-        if hay_que_comprar():
-            # Comprar al distribuidor
-            yield env.process(comprar(env, STOCK_MAX - stock))
+    if sale_time == 0:
+        # No se pudo vender
+        print("**** %s no se pudo vender" % (name))
+        yield env.process(comprar(env, STOCK_MAX - stock))  # Invoca al proceso comprar al distribuidor
+    if hay_que_comprar():
+        # Comprar al distribuidor
+        yield env.process(comprar(env, STOCK_MAX - stock))
 
 
 
