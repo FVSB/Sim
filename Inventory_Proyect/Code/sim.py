@@ -109,7 +109,7 @@ def vender(name, env, last_sale_ok=[False]):
             vendidos += stock
             stock = 0
         print("Venta %.2f unidades en minuto %.2f al cliente %s " % (cantidad, env.now, name))
-        time = tiempo_atención(negar=True)
+        time = tiempo_atención(negar=False)
 
         dt = dt + time
         # Fue exitosa la venta
