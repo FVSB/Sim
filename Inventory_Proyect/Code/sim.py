@@ -178,12 +178,17 @@ class Simulation:
 
             self.end_time = env.now  # Conserva globalmente el ultimo minuto de la simulacion
 
-    def arrival(self, env, salesperson, restock_process):
+    def stop(self, env,i:int, by_time:bool):
+        if by_time:
+            return  env.now > self.sim_time
+        else:
+            return i>=self.clients_count
+    def arrival(self, env, salesperson, restock_process,by_time:bool=False):
         arrival = 0
         i = 0
         assert len(self.people) == 0, "La lista de personas no esta vacia"
         assert len(self.orders) == 0, "La lista de ordenes no esta vacia"
-        for i in range(self.clients_count):  # Para n clientes
+        while not self.stop(env,i,by_time): # Para n clientes
             R = random.random()
             arrival = -self.arrival_time * math.log(R)  # Distribucion exponencial
             yield env.timeout(arrival)  # Deja transcurrir un tiempo entre uno y otro
@@ -203,7 +208,7 @@ class Simulation:
 
             i += 1
 
-            env.process(self.client(env, 'Cliente %d' % i, salesperson, restock_process))
+            env.process(self.client(env, 'Cliente %d' % i,i-1, salesperson, restock_process))
 
     def start(self, by_time: bool = True):
         #  print("------------------- Bienvenido Simulacion Inventario ------------------")
@@ -214,34 +219,10 @@ class Simulation:
         # limpiar las listas de personas y ordenes
         self.people = []
         self.orders = []
-        if by_time:
-            env.process(self.arrival_by_time(env, salesperson, restock_process))
-        else:
-            env.process(self.arrival(env, salesperson, restock_process))  # Invoca el proceso princial
+
+        env.process(self.arrival(env, salesperson, restock_process,by_time))  # Invoca el proceso princial
         env.run()  # Inicia la simulacion
 
         print(f'El money_balance es de {self.money_balance}')
 
 
-sim = Simulation(seed=30, sim_time=720, arrival_times=0.2, buy_price=200, sale_price=300, STOCK_MAX=15, STOCK_MIN=4,
-                 initial_stock=4, Repo_Min_T=65, Repo_Max_T=180, storekeeper=1, clients_count=1500,
-                 maintenance_cost=0.05)
-
-
-sim.start(False)
-print(len(sim.people))
-print(len(sim.orders))
-
-print(sim.orders_count)
-c=0
-for i in sim.people:
-    c+=i.count_can_buy*300
-
-print(c)
-e=0
-for i in sim.orders:
-    e+=i.count*200
-
-print(e)
-
-print(c-e)
