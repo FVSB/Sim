@@ -158,8 +158,8 @@ class Simulation:
             yield env.process(self.sale_stock(name, env, index, sale_bool))  # Invoca al proceso vender
             # Actulizar el money_balance
             self.update_balance(env)
-            ok_sale = sale_bool[0]
-            # assert ok_sale, f"El cliente {name} no pudo comprar el producto "
+
+           
             #  print(f"LA venta al cliente {name} fue exitosa {ok_sale}   ")
             # El cliente termina la compra
             departure = env.now
