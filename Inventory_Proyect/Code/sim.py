@@ -43,6 +43,13 @@ class Simulation:
         # orders
         self.orders = [Orders]
 
+        # count persons can buy
+
+        self.count_can_by_p: int = 0
+
+        # active order
+        self.active_order = False
+
     def need_to_buy(self) -> bool:
 
         if self.stock <= self.STOCK_MIN:
@@ -51,37 +58,40 @@ class Simulation:
             return False
 
     def restock(self, env, buy_count, restock_process):
-        self.orders_count += 1
         # Verifica si hay una cola antes de solicitar el recurso
-        if len(restock_process.queue) > 0:
+        if len(restock_process.queue) > 0 or self.active_order:
             # El proceso de reabastecimiento decide abandonar
            # print(f"El proceso de reabastecimiento decidió abandonar debido a la cola.")
 
             return env.timeout(0)
+        self.orders_count += 1
+        self.active_order = True
         with restock_process.request() as request:  # Espera su turno
             yield request
-       # print("Compra %.2f unidades en minuto %.2f con balance %.2f" % (buy_count, env.now, self.money_balance))
+            # print("Compra %.2f unidades en minuto %.2f con balance %.2f" % (buy_count, env.now, self.money_balance))
 
-        R = random.random()  # Obtiene un numero aleatorio y lo guarda en R
-        time = self.Repo_Max_T - self.Repo_Min_T
-        buy_time = self.Repo_Min_T + (time * R)  # Distribucion uniforme
+            R = random.random()  # Obtiene un numero aleatorio y lo guarda en R
+            time = self.Repo_Max_T - self.Repo_Min_T
+            buy_time = self.Repo_Min_T + (time * R)  # Distribucion uniforme
 
-        b_time = env.now
-        b_stock = self.stock
-        yield env.timeout(buy_time)  # deja correr el tiempo n minutos
-        self.stock += buy_count
-        self.money_balance -= buy_count * self.buy_price
-        self.buy_to_supplier += buy_count
-        self.last_time_by_to_supplier = env.now
+            b_time = env.now
+            b_stock = self.stock
+            yield env.timeout(buy_time)  # deja correr el tiempo n minutos
+            self.stock += buy_count
+            self.money_balance -= buy_count * self.buy_price
+            self.buy_to_supplier += buy_count
+            self.last_time_by_to_supplier = env.now
 
-        self.orders.append(Orders(name=f'Compra {buy_count}', count=buy_count, start_time=b_time, process_time=buy_time,
-                                  count_stock_before=b_stock, count_stock_after=self.stock))
+            self.orders.append(
+                Orders(name=f'Compra # {self.orders_count}', count=buy_count, start_time=b_time, process_time=buy_time,
+                       count_stock_before=b_stock, count_stock_after=self.stock))
 
-       # print("  Compra listo en %.2f minutos tiempo actual %.2f con balance %.2f" % (
-        #    buy_time, env.now, self.money_balance))
+            #  print("  Compra listo en %.2f minutos tiempo actual %.2f con balance %.2f" % (
+            #     buy_time, env.now, self.money_balance))
 
-        # actualizar el money_balance
-        self.update_balance(env)
+            # actualizar el money_balance
+            self.update_balance(env)
+            self.active_order = False
 
     def atention_time(self, no_sale: bool = False):  # Distribución de probabilidad de tiempo de atención
         max_time = 5.0
@@ -120,6 +130,7 @@ class Simulation:
             # actualizar la persona
             person.can_buy = True
             person.count_can_buy = temp_count
+            self.count_can_by_p += 1
 
             # print("Venta %.2f unidades en minuto %.2f al cliente %s " % (buy_count, env.now, name))
             time = self.atention_time(no_sale=False)
@@ -173,17 +184,16 @@ class Simulation:
             # actualizar la persona
             person.departure_time = departure
 
-            #  print("<--- %s deja la tienda en minuto %.2f" % (name, departure))
+          #  print("<--- %s deja la tienda en minuto %.2f" % (name, departure))
             yield env.timeout(0)  # Deja correr el tiempo n minutos para poder recibir al proximo cliente
 
-            if self.need_to_buy() and len(restock_process.queue) == 0:
-                # Comprar al distribuidor
-                self.update_balance(env)
-                yield env.process(
-                    self.restock(env, self.STOCK_MAX - self.stock, restock_process))
-                # Invoca al proceso comprar al distribuidor
-
-            self.end_time = env.now  # Conserva globalmente el ultimo minuto de la simulacion
+        if self.need_to_buy() and len(restock_process.queue) == 0:
+            # Comprar al distribuidor
+            self.update_balance(env)
+            yield env.process(
+                self.restock(env, self.STOCK_MAX - self.stock, restock_process))
+            # Invoca al proceso comprar al distribuidor
+        self.end_time = env.now  # Conserva globalmente el ultimo minuto de la simulacion
 
     def stop(self, env, i: int, by_time: bool):
         if by_time:
@@ -203,7 +213,7 @@ class Simulation:
             i += 1
             # Agregar la persona
             self.people.append(Person(name=f'Cliente {i}', arrival_time=env.now))
-
+         #   print(f"EL CLIENTe {i} llego en el minuto {env.now}")
             env.process(self.client(env, 'Cliente %d' % i, i - 1, salesperson, restock_process))
 
     def arrival_by_time(self, env, salesperson, restock_process):
@@ -235,5 +245,6 @@ class Simulation:
         result = Experiment(sim_time=self.sim_time, arrival_time=self.arrival_time, stock=self.initial_stock,
                             stock_max=self.STOCK_MAX, stock_min=self.STOCK_MIN, stock_restock=self.buy_to_supplier,
                             clients_count=self.clients_count, people=self.people, orders=self.orders,
-                            money_balance=self.money_balance,service_time=self.end_time)
+                            money_balance=self.money_balance, service_time=self.end_time,
+                            count_persons_can_buy=self.count_can_by_p)
         return result
