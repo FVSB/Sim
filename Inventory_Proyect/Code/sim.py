@@ -6,7 +6,8 @@ from Utils import *
 
 class Simulation:
     def __init__(self, seed, storekeeper, arrival_times, sim_time, initial_stock, STOCK_MAX, STOCK_MIN,
-                 buy_price, sale_price, maintenance_cost, clients_count, Repo_Max_T, Repo_Min_T):
+                 buy_price, sale_price, maintenance_cost, clients_count, Repo_Max_T, Repo_Min_T, min_client_order=1,
+                 max_client_order=10):
         self.SEMILLA = seed
         self.salesperson_count = storekeeper
         self.arrival_time = arrival_times  # tiempo de llegada promedio entre cada cliente osea un promedio de 3 por hora
@@ -20,7 +21,11 @@ class Simulation:
         self.clients_count = clients_count
         self.Repo_Max_T = Repo_Max_T
         self.Repo_Min_T = Repo_Min_T
+        # count of max and min orders by client
+        self.min_client_order = min_client_order
+        self.max_client_order = max_client_order
 
+        # variables
         self.stock = initial_stock
         self.sales_count = 0
         self.buy_to_supplier = 0
@@ -32,7 +37,7 @@ class Simulation:
         self.dt = 0.0  # duracion de servicio total
         self.end_time = 0.0  # minuto en el que finaliza
 
-        self.orders_count=0
+        self.orders_count = 0
         # person
         self.people = [Person]
         # orders
@@ -46,16 +51,16 @@ class Simulation:
             return False
 
     def restock(self, env, buy_count, restock_process):
-        self.orders_count+=1
+        self.orders_count += 1
         # Verifica si hay una cola antes de solicitar el recurso
         if len(restock_process.queue) > 0:
             # El proceso de reabastecimiento decide abandonar
-            print(f"El proceso de reabastecimiento decidió abandonar debido a la cola.")
+           # print(f"El proceso de reabastecimiento decidió abandonar debido a la cola.")
 
             return env.timeout(0)
         with restock_process.request() as request:  # Espera su turno
             yield request
-        print("Compra %.2f unidades en minuto %.2f con balance %.2f" % (buy_count, env.now, self.money_balance))
+       # print("Compra %.2f unidades en minuto %.2f con balance %.2f" % (buy_count, env.now, self.money_balance))
 
         R = random.random()  # Obtiene un numero aleatorio y lo guarda en R
         time = self.Repo_Max_T - self.Repo_Min_T
@@ -72,8 +77,8 @@ class Simulation:
         self.orders.append(Orders(name=f'Compra {buy_count}', count=buy_count, start_time=b_time, process_time=buy_time,
                                   count_stock_before=b_stock, count_stock_after=self.stock))
 
-        print("  Compra listo en %.2f minutos tiempo actual %.2f con balance %.2f" % (
-            buy_time, env.now, self.money_balance))
+       # print("  Compra listo en %.2f minutos tiempo actual %.2f con balance %.2f" % (
+        #    buy_time, env.now, self.money_balance))
 
         # actualizar el money_balance
         self.update_balance(env)
@@ -88,10 +93,13 @@ class Simulation:
         R = random.random()
         return min_time + (max_time - min_time) * R  # Distribución uniforme
 
+    def count_to_buy(self):
+        return random.randint(self.min_client_order, self.max_client_order)
+
     def sale_stock(self, name, env, index: int, last_sale_ok=[False]):
         person = self.people[index]
-
-        buy_count = random.randint(1, 10)
+        # Generar variable aleatoria de cuanto comprar del producto
+        buy_count = self.count_to_buy()
 
         person.count_to_buy = buy_count
         if self.stock < 1:
@@ -159,7 +167,6 @@ class Simulation:
             # Actulizar el money_balance
             self.update_balance(env)
 
-           
             #  print(f"LA venta al cliente {name} fue exitosa {ok_sale}   ")
             # El cliente termina la compra
             departure = env.now
@@ -169,7 +176,7 @@ class Simulation:
             #  print("<--- %s deja la tienda en minuto %.2f" % (name, departure))
             yield env.timeout(0)  # Deja correr el tiempo n minutos para poder recibir al proximo cliente
 
-            if self.need_to_buy() and len(restock_process.queue)==0:
+            if self.need_to_buy() and len(restock_process.queue) == 0:
                 # Comprar al distribuidor
                 self.update_balance(env)
                 yield env.process(
@@ -178,17 +185,18 @@ class Simulation:
 
             self.end_time = env.now  # Conserva globalmente el ultimo minuto de la simulacion
 
-    def stop(self, env,i:int, by_time:bool):
+    def stop(self, env, i: int, by_time: bool):
         if by_time:
-            return  env.now > self.sim_time
+            return env.now > self.sim_time
         else:
-            return i>=self.clients_count
-    def arrival(self, env, salesperson, restock_process,by_time:bool=False):
+            return i >= self.clients_count
+
+    def arrival(self, env, salesperson, restock_process, by_time: bool = False):
         arrival = 0
         i = 0
         assert len(self.people) == 0, "La lista de personas no esta vacia"
         assert len(self.orders) == 0, "La lista de ordenes no esta vacia"
-        while not self.stop(env,i,by_time): # Para n clientes
+        while not self.stop(env, i, by_time):  # Para n clientes
             R = random.random()
             arrival = -self.arrival_time * math.log(R)  # Distribucion exponencial
             yield env.timeout(arrival)  # Deja transcurrir un tiempo entre uno y otro
@@ -208,7 +216,7 @@ class Simulation:
 
             i += 1
 
-            env.process(self.client(env, 'Cliente %d' % i,i-1, salesperson, restock_process))
+            env.process(self.client(env, 'Cliente %d' % i, i - 1, salesperson, restock_process))
 
     def start(self, by_time: bool = True):
         #  print("------------------- Bienvenido Simulacion Inventario ------------------")
@@ -216,13 +224,16 @@ class Simulation:
         env = simpy.Environment()  # Crea el objeto entorno de simulacion
         salesperson = simpy.Resource(env, self.salesperson_count)  # Crea los recursos tendero
         restock_process = simpy.Resource(env, 1)
-        # limpiar las listas de personas y ordenes
+        # limpiar las listas de personas y órdenes
         self.people = []
         self.orders = []
 
-        env.process(self.arrival(env, salesperson, restock_process,by_time))  # Invoca el proceso princial
+        env.process(self.arrival(env, salesperson, restock_process, by_time))  # Invoca el proceso princial
         env.run()  # Inicia la simulacion
 
-        print(f'El money_balance es de {self.money_balance}')
-
-
+        # print(f'El money_balance es de {self.money_balance}')
+        result = Experiment(sim_time=self.sim_time, arrival_time=self.arrival_time, stock=self.initial_stock,
+                            stock_max=self.STOCK_MAX, stock_min=self.STOCK_MIN, stock_restock=self.buy_to_supplier,
+                            clients_count=self.clients_count, people=self.people, orders=self.orders,
+                            money_balance=self.money_balance,service_time=self.end_time)
+        return result
