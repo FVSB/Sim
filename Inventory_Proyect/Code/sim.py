@@ -47,6 +47,14 @@ class Simulation:
 
         self.count_can_by_p: int = 0
 
+        # count person cannot buy
+
+        self.count_persons_cannot_buy=0
+
+        #count persons cannot buy all demand
+
+        self.count_persons_cannot_buy_all_demand=0
+
         # active order
         self.active_order = False
 
@@ -111,11 +119,17 @@ class Simulation:
         # Generar variable aleatoria de cuanto comprar del producto
         buy_count = self.count_to_buy()
 
+        #Actualizar la persona
         person.count_to_buy = buy_count
+
         if self.stock < 1:
             person.can_buy = False
             time = self.atention_time(True)
             self.dt = self.dt + time
+
+            #aumentar el numero de personas que no pudieron comprar
+            self.count_persons_cannot_buy+=1
+
             # print(f'No hay nada de stock el cliente {name} no pudo comprar {buy_count} producto')
 
             last_sale_ok[0] = False
@@ -131,6 +145,9 @@ class Simulation:
             person.can_buy = True
             person.count_can_buy = temp_count
             self.count_can_by_p += 1
+            if(temp_count!=buy_count):
+                self.count_persons_cannot_buy_all_demand+=1
+
 
             # print("Venta %.2f unidades en minuto %.2f al cliente %s " % (buy_count, env.now, name))
             time = self.atention_time(no_sale=False)
@@ -246,5 +263,9 @@ class Simulation:
                             stock_max=self.STOCK_MAX, stock_min=self.STOCK_MIN, stock_restock=self.buy_to_supplier,
                             clients_count=self.clients_count, people=self.people, orders=self.orders,
                             money_balance=self.money_balance, service_time=self.end_time,
-                            count_persons_can_buy=self.count_can_by_p)
+                            count_persons_can_buy=self.count_can_by_p,
+                            count_persons_cannot_buy_all=self.count_persons_cannot_buy_all_demand,
+                            count_persons_cannot_buy=self.count_persons_cannot_buy,
+                            count_persons_can_buy_all=self.count_can_by_p - self.count_persons_cannot_buy_all_demand)
+
         return result
