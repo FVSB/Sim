@@ -180,4 +180,37 @@ class Experiment:
     def display_count_orders(self):
         print(f" Cantidad de ordenes {self.count_orders()}")
 
+import numpy as np
+def get_analysis(data, info: str):
+    # Calcula la media
+    media = np.mean(data)
+
+    # Calcula la mediana
+    mediana = np.median(data)
+
+    # Calcula la varianza
+    varianza = np.var(data)
+
+    # Calcula la desviación estándar
+    desviacion_estandar = np.std(data)
+
+    # Calcula el valor mínimo
+    minimo = np.min(data)
+
+    # Calcula el valor máximo
+    maximo = np.max(data)
+    print()
+    # Dar espacio
+    space()
+    print(info)
+    print(f' Media: {media}')
+    print(f'Mediana: {mediana}')
+    print(f'Varianza: {varianza}')
+    print(f'Desviación estándar: {desviacion_estandar}')
+    print(f'Mínimo: {minimo}')
+    print(f'Máximo: {maximo}')
+    # dar espacio
+    space()
+    # llamar a graficador
+    get_graphics(media, mediana, varianza, desviacion_estandar, minimo, maximo, info, data)
 
