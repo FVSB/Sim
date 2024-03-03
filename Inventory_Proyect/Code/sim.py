@@ -6,7 +6,6 @@ from Utils import *
 
 class Simulation:
 
-
     def __init__(self, seed, storekeeper, arrival_times, sim_time, initial_stock, STOCK_MAX, STOCK_MIN,
                  buy_price, sale_price, maintenance_cost, clients_count, Repo_Max_T, Repo_Min_T, min_client_order=1,
                  max_client_order=10):
@@ -29,8 +28,7 @@ class Simulation:
 
         # variables
 
-
-        self.stock = initial_stock # variable para conocer en cada momento el stock en tienda
+        self.stock = initial_stock  # variable para conocer en cada momento el stock en tienda
         self.sales_count = 0
         self.buy_to_supplier = 0
         self.money_balance: float = 0
@@ -162,11 +160,11 @@ class Simulation:
             last_sale_ok[0] = True
             yield env.timeout(time)  # Deja correr el tiempo n minutos
 
-    def set_balance(self, balance: float, time,cash_flow):
+    def set_balance(self, balance: float, time, cash_flow):
         if self.balance is None:
             self.balance = []
 
-        bal = Balance(balance=balance, time=time, cash_flow=cash_flow, id=len(self.balance )+1,count_sales=self.stock)
+        bal = Balance(balance=balance, time=time, cash_flow=cash_flow, id=len(self.balance) + 1, count_sales=self.stock)
         self.balance.append(bal)
 
     def update_balance(self, env):
@@ -176,7 +174,7 @@ class Simulation:
             temp = self.stock * self.maintenance_cost * time
             self.money_balance -= temp
 
-            #update balance list
+            # update balance list
             self.set_balance(balance=self.money_balance, time=env.now, cash_flow=temp)
 
         self.last_inventary_change = env.now
@@ -244,20 +242,8 @@ class Simulation:
             yield env.timeout(arrival)  # Deja transcurrir un tiempo entre uno y otro
             i += 1
             # Agregar la persona
-            self.people.append(Person(name=f'Cliente {i}', arrival_time=env.now))
+            self.people.append(Person(id=i, name=f'Cliente {i}', arrival_time=env.now))
             #   print(f"EL CLIENTe {i} llego en el minuto {env.now}")
-            env.process(self.client(env, 'Cliente %d' % i, i - 1, salesperson, restock_process))
-
-    def arrival_by_time(self, env, salesperson, restock_process):
-        arrival = 0
-        i = 0
-        while env.now < self.sim_time:  # Para n clientes
-            R = random.random()
-            arrival = -self.arrival_time * math.log(R)  # Distribucion exponencial
-            yield env.timeout(arrival)  # Deja transcurrir un tiempo entre uno y otro
-
-            i += 1
-
             env.process(self.client(env, 'Cliente %d' % i, i - 1, salesperson, restock_process))
 
     def start(self, by_time: bool = True):

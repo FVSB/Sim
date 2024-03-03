@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+
+
 def get_graphics(media, mediana, varianza, desviacion_estandar, minimo, maximo, info, data):
     # Crea una lista con los nombres de las estadísticas
     stats = ['Media', 'Mediana', 'Varianza', 'Desviación estándar', 'Mínimo', 'Máximo']
@@ -30,25 +32,35 @@ def get_graphics(media, mediana, varianza, desviacion_estandar, minimo, maximo, 
     plt.show()
 
 
-
-def balance_graphics(time, balance, info: str):
+def general_graphics(time, balance, info: str, xlabel: str, ylabel: str):
+    """"
+    el xlabel es para relacionar el tiempo
+    el ylabel es para relacionar el otro ente
+    """
     # Generar gráficos
     plt.figure(figsize=(24, 12))
 
     # Gráfico de línea del balance a lo largo del tiempo
     plt.subplot(1, 2, 1)
     plt.plot(time, balance)
-    plt.xlabel('Tiempo')
-    plt.ylabel('Balance')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.title(info)
 
     # Histograma de los balances
     plt.subplot(1, 2, 2)
     plt.hist(balance, bins=10, edgecolor='black')
-    plt.xlabel('Balance')
+    plt.xlabel(ylabel)
     plt.ylabel('Frecuencia')
-    plt.title('Distribución de los balances')
+    plt.title(f'Distribución de los {ylabel}')
 
     plt.tight_layout()
     plt.show()
 
+
+def balance_graphics(time, balance, info: str):
+    general_graphics(time, balance, info, "Tiempo", "Balance")
+
+def person_graphics(time,balance,info:str):
+
+    general_graphics(time, balance, info, "Tiempo", "Persona")

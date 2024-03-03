@@ -39,10 +39,11 @@ def group_balances_by_id(balances: list[list[Balance]]):
     for exp in balances:
         for balance in exp:
             if balance.id not in balance_dict:
-                balance_dict[balance.id] = []
-                sales_dict[balance.id] = []
-            balance_dict[balance.id].append(balance)
-            sales_dict[balance.id].append(balance.count_sales)
+                balance_dict[balance.id] = [balance]
+                sales_dict[balance.id] = [balance.count_sales]
+            else:
+                balance_dict[balance.id].append(balance)
+                sales_dict[balance.id].append(balance.count_sales)
     return balance_dict, sales_dict
 
 
@@ -188,9 +189,11 @@ def __balance_by_Id(balance: list[list[Balance]], count_max_balance: int):
         space()
 
 
+
 def balance_analize(data: list[Experiment]):
     # extraer cuanto es el número máximo de balances
     count_max_balance = max([len(k.balance) for k in data])
     balance = [k.balance for k in data]
     # Balance por el id basado particionar por el Id
     __balance_by_Id(balance, count_max_balance)
+

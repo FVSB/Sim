@@ -5,20 +5,6 @@ import matplotlib.pyplot as plt
 from graphics import get_graphics
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def normal_analize(data: list[Experiment]):
     # En base a las ganancias de dinero
     a = np.array([k.money_balance for k in data])
@@ -33,6 +19,9 @@ def normal_analize(data: list[Experiment]):
     # No fue suplida toda la demanda
     a = np.array([a.count_persons_cannot_buy_all for a in data])
     get_analysis(a, "Fueron suplidos con menos oferta que su demanda")
+
+
+from person_analize import *
 
 
 def analysis(data: list[Experiment]):
