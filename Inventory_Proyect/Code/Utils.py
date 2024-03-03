@@ -1,3 +1,25 @@
+def space():
+    """
+    Print a space
+    :return:
+    """
+    print("\n")
+    print("------------------------------------")
+class Balance:
+    name: str = ""
+    id: int = -1
+    balance: float = 0
+    cash_flow: float = 0
+    time: float = -1
+
+    def __init__(self, id: int, balance: float, time: float, cash_flow: float):
+        self.name = f"Balance {id}"
+        self.id = id
+        self.balance = balance
+        self.time = time
+        self.cash_flow = cash_flow
+
+
 class Person:
     name: str = ""
     count_to_buy: int = -1
@@ -71,16 +93,20 @@ class Experiment:
     clients_count: int = 0
     people: list[Person] = []
     orders: list[Orders] = []
+    balance: list[Balance] = []
     money_balance: float = 0
     # about persons
     count_persons_can_buy = 0
     count_persons_cannot_buy = 0
-    count_persons_can_buy_all=0
-    count_persons_cannot_buy_all=0
+    count_persons_can_buy_all = 0
+    count_persons_cannot_buy_all = 0
 
     def __init__(self, sim_time: float, arrival_time: float, service_time: float, stock: int, stock_max: int,
-                 stock_min: int, stock_restock: int, clients_count: int, money_balance: int, people: list, orders: list,
-                 count_persons_can_buy: int,count_persons_cannot_buy:int,count_persons_can_buy_all:int,count_persons_cannot_buy_all:int):
+                 stock_min: int, stock_restock: int, clients_count: int, money_balance: int, people: list[Person],
+                 orders: list[Orders],
+                 balance: list[Balance],
+                 count_persons_can_buy: int, count_persons_cannot_buy: int, count_persons_can_buy_all: int,
+                 count_persons_cannot_buy_all: int):
         self.sim_time = sim_time
         self.arrival_time = arrival_time
         self.service_time = service_time
@@ -91,11 +117,12 @@ class Experiment:
         self.clients_count = clients_count
         self.people = people
         self.orders = orders
+        self.balance = balance
         self.money_balance = money_balance
         self.count_persons_can_buy = count_persons_can_buy
-        self.count_persons_cannot_buy=count_persons_cannot_buy
-        self.count_persons_can_buy_all=count_persons_can_buy_all
-        self.count_persons_cannot_buy_all=count_persons_cannot_buy_all
+        self.count_persons_cannot_buy = count_persons_cannot_buy
+        self.count_persons_can_buy_all = count_persons_can_buy_all
+        self.count_persons_cannot_buy_all = count_persons_cannot_buy_all
 
     def display(self):
         print(f"Money Balance: {self.money_balance}")
@@ -129,38 +156,26 @@ class Experiment:
         for order in self.orders:
             order.display()
 
-    def count_persons_cannot_buy(self):
-        count = 0
-        for person in self.people:
-            if not person.can_buy:
-                count += 1
-        return count
-
     def display_count_persons_cannot_buy(self):
-        print(f" No pudieron comprar {self.count_persons_cannot_buy()}")
-
+        print(f" No pudieron comprar {self.count_persons_cannot_buy}")
 
     def display_count_persons_can_buy(self):
         print(f" Pudieron comprar {self.count_persons_can_buy}")
+
     def persons_cannot_buy_all(self):
-        lis=[]
+        lis = []
         count = 0
         for person in self.people:
             if person.count_can_buy < person.count_to_buy and person.can_buy:
                 lis.append(person)
 
         return lis
-    def count_persons_cannot_buy_all(self):
-        return len(self.persons_cannot_buy_all())
+
     def display_count_persons_cannot_buy_all(self):
-        print(f" No pudieron comprar todo lo que pidieron {len(self.persons_cannot_buy_all())}")
-
-
+        print(f" No pudieron comprar todo lo que pidieron {self.count_persons_cannot_buy_all}")
 
     def count_orders(self):
         return len(self.orders)
-
-
 
     def display_count_orders(self):
         print(f" Cantidad de ordenes {self.count_orders()}")

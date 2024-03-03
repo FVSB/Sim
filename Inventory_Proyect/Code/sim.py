@@ -29,7 +29,7 @@ class Simulation:
         self.stock = initial_stock
         self.sales_count = 0
         self.buy_to_supplier = 0
-        self.money_balance = 0
+        self.money_balance: float = 0
         self.last_time_by_to_supplier = 0
         self.last_inventary_change = 0.0
 
@@ -42,6 +42,8 @@ class Simulation:
         self.people = [Person]
         # orders
         self.orders = [Orders]
+        # balance
+        self.balance = [Balance]
 
         # count persons can buy
 
@@ -49,11 +51,11 @@ class Simulation:
 
         # count person cannot buy
 
-        self.count_persons_cannot_buy=0
+        self.count_persons_cannot_buy = 0
 
-        #count persons cannot buy all demand
+        # count persons cannot buy all demand
 
-        self.count_persons_cannot_buy_all_demand=0
+        self.count_persons_cannot_buy_all_demand = 0
 
         # active order
         self.active_order = False
@@ -69,7 +71,7 @@ class Simulation:
         # Verifica si hay una cola antes de solicitar el recurso
         if len(restock_process.queue) > 0 or self.active_order:
             # El proceso de reabastecimiento decide abandonar
-           # print(f"El proceso de reabastecimiento decidió abandonar debido a la cola.")
+            # print(f"El proceso de reabastecimiento decidió abandonar debido a la cola.")
 
             return env.timeout(0)
         self.orders_count += 1
@@ -119,7 +121,7 @@ class Simulation:
         # Generar variable aleatoria de cuanto comprar del producto
         buy_count = self.count_to_buy()
 
-        #Actualizar la persona
+        # Actualizar la persona
         person.count_to_buy = buy_count
 
         if self.stock < 1:
@@ -127,8 +129,8 @@ class Simulation:
             time = self.atention_time(True)
             self.dt = self.dt + time
 
-            #aumentar el numero de personas que no pudieron comprar
-            self.count_persons_cannot_buy+=1
+            # aumentar el numero de personas que no pudieron comprar
+            self.count_persons_cannot_buy += 1
 
             # print(f'No hay nada de stock el cliente {name} no pudo comprar {buy_count} producto')
 
@@ -145,9 +147,8 @@ class Simulation:
             person.can_buy = True
             person.count_can_buy = temp_count
             self.count_can_by_p += 1
-            if(temp_count!=buy_count):
-                self.count_persons_cannot_buy_all_demand+=1
-
+            if (temp_count != buy_count):
+                self.count_persons_cannot_buy_all_demand += 1
 
             # print("Venta %.2f unidades en minuto %.2f al cliente %s " % (buy_count, env.now, name))
             time = self.atention_time(no_sale=False)
@@ -157,12 +158,22 @@ class Simulation:
             last_sale_ok[0] = True
             yield env.timeout(time)  # Deja correr el tiempo n minutos
 
+    def set_balance(self, balance: float, time,cash_flow):
+        if self.balance is None:
+            self.balance = []
+
+        bal = Balance(balance=balance, time=time, cash_flow=cash_flow, id=len(self.balance )+1)
+        self.balance.append(bal)
+
     def update_balance(self, env):
 
         time = env.now - self.last_inventary_change
         if time > 0:
             temp = self.stock * self.maintenance_cost * time
             self.money_balance -= temp
+
+            #update balance list
+            self.set_balance(balance=self.money_balance, time=env.now, cash_flow=temp)
 
         self.last_inventary_change = env.now
 
@@ -201,7 +212,7 @@ class Simulation:
             # actualizar la persona
             person.departure_time = departure
 
-          #  print("<--- %s deja la tienda en minuto %.2f" % (name, departure))
+            #  print("<--- %s deja la tienda en minuto %.2f" % (name, departure))
             yield env.timeout(0)  # Deja correr el tiempo n minutos para poder recibir al proximo cliente
 
         if self.need_to_buy() and len(restock_process.queue) == 0:
@@ -230,7 +241,7 @@ class Simulation:
             i += 1
             # Agregar la persona
             self.people.append(Person(name=f'Cliente {i}', arrival_time=env.now))
-         #   print(f"EL CLIENTe {i} llego en el minuto {env.now}")
+            #   print(f"EL CLIENTe {i} llego en el minuto {env.now}")
             env.process(self.client(env, 'Cliente %d' % i, i - 1, salesperson, restock_process))
 
     def arrival_by_time(self, env, salesperson, restock_process):
@@ -254,7 +265,7 @@ class Simulation:
         # limpiar las listas de personas y órdenes
         self.people = []
         self.orders = []
-
+        self.balance = []
         env.process(self.arrival(env, salesperson, restock_process, by_time))  # Invoca el proceso princial
         env.run()  # Inicia la simulacion
 
@@ -266,6 +277,7 @@ class Simulation:
                             count_persons_can_buy=self.count_can_by_p,
                             count_persons_cannot_buy_all=self.count_persons_cannot_buy_all_demand,
                             count_persons_cannot_buy=self.count_persons_cannot_buy,
-                            count_persons_can_buy_all=self.count_can_by_p - self.count_persons_cannot_buy_all_demand)
+                            count_persons_can_buy_all=self.count_can_by_p - self.count_persons_cannot_buy_all_demand,
+                            balance=self.balance)
 
         return result
