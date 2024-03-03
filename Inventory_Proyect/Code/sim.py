@@ -5,6 +5,8 @@ from Utils import *
 
 
 class Simulation:
+
+
     def __init__(self, seed, storekeeper, arrival_times, sim_time, initial_stock, STOCK_MAX, STOCK_MIN,
                  buy_price, sale_price, maintenance_cost, clients_count, Repo_Max_T, Repo_Min_T, min_client_order=1,
                  max_client_order=10):
@@ -26,7 +28,9 @@ class Simulation:
         self.max_client_order = max_client_order
 
         # variables
-        self.stock = initial_stock
+
+
+        self.stock = initial_stock # variable para conocer en cada momento el stock en tienda
         self.sales_count = 0
         self.buy_to_supplier = 0
         self.money_balance: float = 0
@@ -162,7 +166,7 @@ class Simulation:
         if self.balance is None:
             self.balance = []
 
-        bal = Balance(balance=balance, time=time, cash_flow=cash_flow, id=len(self.balance )+1)
+        bal = Balance(balance=balance, time=time, cash_flow=cash_flow, id=len(self.balance )+1,count_sales=self.stock)
         self.balance.append(bal)
 
     def update_balance(self, env):

@@ -1,5 +1,5 @@
 from Utils import *
-from graphics import balance_graphics,get_graphics
+from graphics import balance_graphics, get_graphics
 
 
 def balance_analize_by_experiment(data: list[Balance]):
@@ -35,17 +35,18 @@ def balance_analize_by_experiment(data: list[Balance]):
 
 def group_balances_by_id(balances: list[list[Balance]]):
     balance_dict = {}
-
+    sales_dict = {}
     for exp in balances:
         for balance in exp:
             if balance.id not in balance_dict:
                 balance_dict[balance.id] = []
+                sales_dict[balance.id] = []
             balance_dict[balance.id].append(balance)
-    return balance_dict
+            sales_dict[balance.id].append(balance.count_sales)
+    return balance_dict, sales_dict
 
 
-
-def get_balance_resourcer_by_partition(data: list[list[Balance]]):
+def get_balance_resourcer_by_partition(dic: dict):
     """
         This function performs statistical analysis on a list of Experiment objects.
         It groups the data by id and calculates the mean, median, variance, standard deviation,
@@ -58,8 +59,7 @@ def get_balance_resourcer_by_partition(data: list[list[Balance]]):
         list: Six lists containing the mean, median, variance, standard deviation, minimum and maximum
         of the balance for each group, respectively.
         """
-    # agrupar la data
-    dic = group_balances_by_id(data)
+
     # iterar por las particiones de tiempo
     media = []
     mediana = []
@@ -89,54 +89,108 @@ def get_balance_resourcer_by_partition(data: list[list[Balance]]):
     # Dar espacio
     return media, mediana, varianza, desviacion_estandar, minimo, maximo
 
+def get_sales_resourcer_by_partition(dic: dict):
+    """
+        This function performs statistical analysis on a list of Experiment objects.
+        It groups the data by id and calculates the mean, median, variance, standard deviation,
+        minimum and maximum for each group.
 
+        Parameters:
+        data (list[Experiment]): A list of Experiment objects.
+
+        Returns:
+        list: Six lists containing the mean, median, variance, standard deviation, minimum and maximum
+        of the balance for each group, respectively.
+        """
+
+    # iterar por las particiones de tiempo
+    media = []
+    mediana = []
+    varianza = []
+    desviacion_estandar = []
+    minimo = []
+    maximo = []
+    for key in dic.keys():
+        # balance_analize_by_experiment(dic[key])
+        # Calcula la media
+        media.append(np.mean(dic[key]))
+
+        # Calcula la mediana
+        mediana.append(np.median(dic[key]))
+
+        # Calcula la varianza
+        varianza.append(np.var(dic[key]))
+
+        # Calcula la desviación estándar
+        desviacion_estandar.append(np.std(dic[key]))
+
+        # Calcula el valor mínimo
+        minimo.append(np.min(dic[key]))
+
+        # Calcula el valor máximo
+        maximo.append(np.max(dic[key]))
+    # Dar espacio
+    return media, mediana, varianza, desviacion_estandar, minimo, maximo
+def __balance_by_Id(balance: list[list[Balance]], count_max_balance: int):
+    # agrupar por particiones de tiempo
+
+    # agrupar la data
+    dic, sales_dict = group_balances_by_id(balance)
+    x = [dic, sales_dict]
+    name = [" los balances", " las ventas hasta el balance"]
+    for index, (i, j) in enumerate(zip(x, name)):
+        if index==0:
+            media, mediana, varianza, desviacion_estandar, minimo, maximo = get_balance_resourcer_by_partition(i)
+        else:
+            media, mediana, varianza, desviacion_estandar, minimo, maximo=get_sales_resourcer_by_partition(i)
+        # analizar con respecto a los valores promedio y mediana
+        # espacio
+        space()
+        print("Analizar en base a la mediana")
+        get_analysis(mediana, f"Análisis en base a la mediana de {j} en particiones por índices :")
+        # por promedio
+        balance_graphics(range(0, count_max_balance), mediana,
+                         f"Balance de la mediana a traves de la cant de {j}")
+
+        # espacio
+        space()
+        print("Analizar en base al promedio")
+        get_analysis(media, f"Análisis en base al promedio de los {j} en particiones por índices")
+        balance_graphics(range(0, count_max_balance), media, f"Balance del promedio a traves de la cant de los {j}")
+
+        # espacio
+        space()
+        print("Analizar en base a la varianza")
+        get_analysis(varianza, f"Análisis en base a la varianza de los {j} en particiones por índices")
+        balance_graphics(range(0, count_max_balance), varianza,
+                         f"Balance de la varianza a traves de la cant de los {j}")
+        # espacio
+        space()
+
+        # espacio
+        space()
+        print("Analizar en base a la desviación estándar")
+        get_analysis(desviacion_estandar,
+                     f"Análisis en base a la desviación estándar de los {j} en particiones por índices")
+        balance_graphics(range(0, count_max_balance), desviacion_estandar,
+                         f"La desviación estándar a traves de la cant de {j}")
+        # espacio
+        space()
+        print("Analizar en base al mínimo")
+        get_analysis(minimo, f"Análisis en base al mínimo de los {j} en particiones por índices")
+        balance_graphics(range(0, count_max_balance), minimo, f"Balance del mínimo a traves de la cant de {j}")
+        # espacio
+        space()
+        print("Analizar en base al máximo")
+        get_analysis(maximo, f"Análisis en base al máximo de {j} en particiones por índices")
+        balance_graphics(range(0, count_max_balance), maximo, f"Balance del máximo a traves de la cant de {j}")
+        # espacio
+        space()
 
 
 def balance_analize(data: list[Experiment]):
     # extraer cuanto es el número máximo de balances
     count_max_balance = max([len(k.balance) for k in data])
     balance = [k.balance for k in data]
-    # agrupar por particiones de tiempo
-    media, mediana, varianza, desviacion_estandar, minimo, maximo = get_balance_resourcer_by_partition(balance)
-
-    # analizar con respecto a los valores promedio y mediana
-    # espacio
-    space()
-    print("Analizar en base a la mediana")
-    get_analysis(mediana, "Análisis en base a la mediana de los balances en particiones por índices :")
-    # por promedio
-    balance_graphics(range(0, count_max_balance), mediana, "Balance de la mediana a traves de la cant de los balances")
-
-    # espacio
-    space()
-    print("Analizar en base al promedio")
-    get_analysis(media, "Análisis en base al promedio de los balances en particiones por índices")
-    balance_graphics(range(0, count_max_balance), media, "Balance del promedio a traves de la cant de los balances")
-
-    # espacio
-    space()
-    print("Analizar en base a la varianza")
-    get_analysis(varianza, "Análisis en base a la varianza de los balances en particiones por índices")
-    balance_graphics(range(0, count_max_balance), varianza,
-                     "Balance de la varianza a traves de la cant de los balances")
-    # espacio
-    space()
-
-    # espacio
-    space()
-    print("Analizar en base a la desviación estándar")
-    get_analysis(desviacion_estandar, "Análisis en base a la desviación estándar de los balances en particiones por índices")
-    balance_graphics(range(0, count_max_balance), desviacion_estandar,
-                     "Balance de la desviación estándar a traves de la cant de los balances")
-    # espacio
-    space()
-    print("Analizar en base al mínimo")
-    get_analysis(minimo, "Análisis en base al mínimo de los balances en particiones por índices")
-    balance_graphics(range(0, count_max_balance), minimo, "Balance del mínimo a traves de la cant de los balances")
-    # espacio
-    space()
-    print("Analizar en base al máximo")
-    get_analysis(maximo, "Análisis en base al máximo de los balances en particiones por índices")
-    balance_graphics(range(0, count_max_balance), maximo, "Balance del máximo a traves de la cant de los balances")
-    # espacio
-    space()
+    # Balance por el id basado particionar por el Id
+    __balance_by_Id(balance, count_max_balance)

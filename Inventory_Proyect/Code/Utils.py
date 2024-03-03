@@ -11,13 +11,18 @@ class Balance:
     balance: float = 0
     cash_flow: float = 0
     time: float = -1
-
-    def __init__(self, id: int, balance: float, time: float, cash_flow: float):
+    #cuantos se vendieron hasta el momento
+    """
+    cuantos se vendieron hasta el balance
+    """
+    count_sales=0 #cuantos se vendieron hasta el balance
+    def __init__(self, id: int, balance: float, time: float, cash_flow: float,count_sales:int):
         self.name = f"Balance {id}"
         self.id = id
         self.balance = balance
         self.time = time
         self.cash_flow = cash_flow
+        self.count_sales=count_sales
 
 
 class Person:
@@ -180,8 +185,9 @@ class Experiment:
     def display_count_orders(self):
         print(f" Cantidad de ordenes {self.count_orders()}")
 
+from graphics import *
 import numpy as np
-def get_analysis(data, info: str):
+def get_analysis(data, info: str, do_print=True):
     # Calcula la media
     media = np.mean(data)
 
@@ -202,15 +208,18 @@ def get_analysis(data, info: str):
     print()
     # Dar espacio
     space()
-    print(info)
-    print(f' Media: {media}')
-    print(f'Mediana: {mediana}')
-    print(f'Varianza: {varianza}')
-    print(f'Desviación estándar: {desviacion_estandar}')
-    print(f'Mínimo: {minimo}')
-    print(f'Máximo: {maximo}')
-    # dar espacio
-    space()
+    if do_print:
+        print(info)
+        print(f' Media: {media}')
+        print(f'Mediana: {mediana}')
+        print(f'Varianza: {varianza}')
+        print(f'Desviación estándar: {desviacion_estandar}')
+        print(f'Mínimo: {minimo}')
+        print(f'Máximo: {maximo}')
+        # dar espacio
+        space()
+    else:
+        return  media, mediana, varianza, desviacion_estandar, minimo, maximo
     # llamar a graficador
     get_graphics(media, mediana, varianza, desviacion_estandar, minimo, maximo, info, data)
 
