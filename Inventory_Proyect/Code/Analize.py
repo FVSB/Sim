@@ -1,6 +1,7 @@
 import numpy as np
 from Utils import *
-from balance_analize import *
+from balance_analize import balance_analize
+from person_analize import person_analize
 import matplotlib.pyplot as plt
 from graphics import get_graphics
 
@@ -21,11 +22,10 @@ def normal_analize(data: list[Experiment]):
     get_analysis(a, "Fueron suplidos con menos oferta que su demanda")
 
 
-from person_analize import *
-
-
 def analysis(data: list[Experiment]):
     # análisis tipicos y elementales
     normal_analize(data)
     # análisis de balances
     balance_analize(data)
+    # análisis de personas
+    person_analize(data)
